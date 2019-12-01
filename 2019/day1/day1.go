@@ -9,10 +9,14 @@ import (
 	"fmt"
 )
 
+func calcFuel(mass int) int {
+	return mass/3 - 2
+}
+
 func main() {
 
 	var inputFilePath = flag.String("input", "day1.txt", "input file path")
-	var _ = flag.Bool("partB", false, "enable part b")
+	var partB = flag.Bool("partB", false, "enable part b")
 
 	flag.Parse()
 
@@ -32,9 +36,25 @@ func main() {
 			log.Fatal(err)
 		}
 
-		f := mass/3 - 2 // divide by 3, round down, subtract 2
-		fuel += f
+		var f int
+		if *partB {
+			f = mass
+			for {
+				f = calcFuel(f)
+				if f <= 0 {
+					break
+				}
+				fuel += f
+			}
+
+
+		} else {
+			f = calcFuel(mass)
+			fuel += f
+		}
+
 	}
 
 	fmt.Println(fuel)
+
 }
