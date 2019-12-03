@@ -49,33 +49,31 @@ func main() {
 				log.Fatal(err)
 			}
 
+			dx := 0
+			dy := 0
+
 			switch direction {
 			case "R":
-				for i := 0; i < amount; i++ {
-					dist++
-					currentX++
-					createCoordIfNotExists(currentX, currentY, dist, coordToDist)
-				}
+				dx = 1
 			case "L":
-				for i := 0; i < amount; i++ {
-					dist++
-					currentX--
-					createCoordIfNotExists(currentX, currentY, dist, coordToDist)
-				}
+				dx = -1
 			case "U":
-				for i := 0; i < amount; i++ {
-					dist++
-					currentY++
-					createCoordIfNotExists(currentX, currentY, dist, coordToDist)
-				}
+				dy = 1
 			case "D":
-				for i := 0; i < amount; i++ {
-					dist++
-					currentY--
-					createCoordIfNotExists(currentX, currentY, dist, coordToDist)
-				}
+				dy = -1
 			}
 
+			for i := 0; i < amount; i++ {
+				dist++
+				currentX += dx
+				currentY += dy
+
+				c := coord{currentX, currentY}
+				_, ok := coordToDist[c]
+				if !ok {
+					coordToDist[c] = dist
+				}
+			}
 		} // end of instruction
 
 		coordToMinDistList = append(coordToMinDistList, coordToDist)
@@ -103,14 +101,6 @@ func main() {
 		}
 	}
 	fmt.Println(smallest)
-}
-
-func createCoordIfNotExists(x int, y int, dist int, coordToDistance map[coord]int) {
-	c := coord{x, y}
-	_, ok := coordToDistance[c]
-	if !ok {
-		coordToDistance[c] = dist
-	}
 }
 
 func abs(x int) int {
