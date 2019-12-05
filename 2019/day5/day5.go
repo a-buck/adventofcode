@@ -12,9 +12,7 @@ import (
 func main() {
 
 	var inputFilePath = flag.String("input", "day5.txt", "input file path")
-	var partB = flag.Bool("partB", false, "enable part b") // todo currently this represents day 2 part b
-
-	var inputVal = flag.Int("inputVal", 0, "program input")
+	var progInput = flag.Int("inputVal", 0, "program input")
 
 	flag.Parse()
 
@@ -26,21 +24,160 @@ func main() {
 
 	input := string(inputBytes)
 
-	splitInput := strings.Split(input, ",")
+	program := strings.Split(input, ",")
 
-	answer, err := runProgram(splitInput, *partB, *inputVal) // todo: is day 5 using part b of day2 ?
+	outputs := run(program, *progInput)
 
-	if err != nil {
-		log.Fatal(err)
+	for _, v := range outputs {
+		fmt.Println(v)
 	}
-
-	fmt.Println(answer)
 }
 
-func runProgram(program []string, partbnotusedyet bool, input int) (int, error) {
-	numbers := make([]int, len(program))
+func run(programStrSlice []string, input int) []int {
+	program := tointSlice(programStrSlice)
 
-	for i, v := range program {
+	outputs := make([]int, 0)
+
+	instrPtr := 0
+loop:
+	for instrPtr < len(program) {
+
+		instr := program[instrPtr]
+		instrStr := strconv.Itoa(instr)
+
+		var opcode int
+		firstParamImmediateMode := false
+		secondParamImmediateMode := false
+		thirdParamImmediateMode := false
+
+		if len(instrStr) == 1 {
+			opcode = toInt(instrStr)
+		} else {
+			// last 2 digits
+			opcode = toInt(instrStr[len(instrStr)-2 : len(instrStr)])
+		}
+
+		if len(instrStr) >= 3 {
+			firstParamImmediateMode = string(instrStr[len(instrStr)-3]) == "1"
+		}
+		if len(instrStr) >= 4 {
+			secondParamImmediateMode = string(instrStr[len(instrStr)-4]) == "1"
+		}
+		if len(instrStr) >= 5 {
+			thirdParamImmediateMode = string(instrStr[len(instrStr)-5]) == "1"
+		}
+
+		switch opcode {
+		case 1:
+			// add (3 = 1 + 2)
+			firstParam := getParam(instrPtr+1, program, firstParamImmediateMode)
+			secondParam := getParam(instrPtr+2, program, secondParamImmediateMode)
+			result := firstParam + secondParam
+			pIdx := instrPtr + 3
+			updateProgramWithResult(pIdx, program, result, thirdParamImmediateMode)
+			instrPtr += 4
+		case 2:
+			// multiply ( 3 = 1 * 2)
+			firstParam := getParam(instrPtr+1, program, firstParamImmediateMode)
+			secondParam := getParam(instrPtr+2, program, secondParamImmediateMode)
+			result := firstParam * secondParam
+			pIdx := instrPtr + 3
+			updateProgramWithResult(pIdx, program, result, thirdParamImmediateMode)
+			instrPtr += 4
+		case 3:
+			// input (1 = input)
+			p := program[instrPtr+1]
+			program[p] = input
+			instrPtr += 2
+		case 4:
+			// output
+			p := program[instrPtr+1]
+			o := program[p]
+			outputs = append(outputs, o)
+			instrPtr += 2
+		case 5:
+			// jump-if-true
+			firstParam := getParam(instrPtr+1, program, firstParamImmediateMode)
+			secondParam := getParam(instrPtr+2, program, secondParamImmediateMode)
+
+			if firstParam != 0 {
+				instrPtr = secondParam
+			} else {
+				instrPtr += 3
+			}
+		case 6:
+			// jump-if-false
+			firstParam := getParam(instrPtr+1, program, firstParamImmediateMode)
+			secondParam := getParam(instrPtr+2, program, secondParamImmediateMode)
+
+			if firstParam == 0 {
+				instrPtr = secondParam
+			} else {
+				instrPtr += 3
+			}
+		case 7:
+			//less than
+			firstParam := getParam(instrPtr+1, program, firstParamImmediateMode)
+			secondParam := getParam(instrPtr+2, program, secondParamImmediateMode)
+
+			pIdx := instrPtr + 3
+
+			if firstParam < secondParam {
+				updateProgramWithResult(pIdx, program, 1, thirdParamImmediateMode)
+			} else {
+				updateProgramWithResult(pIdx, program, 0, thirdParamImmediateMode)
+			}
+
+			instrPtr += 4
+		case 8:
+			firstParam := getParam(instrPtr+1, program, firstParamImmediateMode)
+			secondParam := getParam(instrPtr+2, program, secondParamImmediateMode)
+
+			pIdx := instrPtr + 3
+
+			var result int
+			if firstParam == secondParam {
+				result = 1
+			} else {
+				result = 0
+			}
+
+			updateProgramWithResult(pIdx, program, result, thirdParamImmediateMode)
+
+			instrPtr += 4
+		case 99:
+			//halt
+			break loop
+		default:
+			log.Fatalf("Oops, unknown opcode %d", opcode)
+		}
+	}
+	return outputs
+}
+
+func updateProgramWithResult(idx int, program []int, result int, isImmediateMode bool) {
+	if !isImmediateMode {
+		// position mode
+		p := program[idx]
+		program[p] = result
+	} else {
+		program[idx] = result
+	}
+}
+
+func getParam(paramIndex int, program []int, isImmediateMode bool) int {
+	p := program[paramIndex]
+	if !isImmediateMode {
+		// position mode
+		return program[p]
+	}
+	return p
+}
+
+func tointSlice(s []string) []int {
+	numbers := make([]int, len(s))
+
+	for i, v := range s {
 		val, err := strconv.Atoi(v)
 		if err != nil {
 			log.Fatal(err)
@@ -48,34 +185,13 @@ func runProgram(program []string, partbnotusedyet bool, input int) (int, error) 
 		numbers[i] = val
 	}
 
-	return evaluate(numbers, input)
+	return numbers
 }
 
-func evaluate(numbers []int, input int) (int, error) {
-	i := 0
-loop:
-	for i < len(numbers) {
-
-		switch opcode := numbers[i]; opcode {
-		case 1:
-			// add (3 = 1 + 2)
-			numbers[numbers[i+3]] = numbers[numbers[i+1]] + numbers[numbers[i+2]]
-			i += 4
-		case 2:
-			// multiply ( 3 = 1 + 2)
-			numbers[numbers[i+3]] = numbers[numbers[i+1]] * numbers[numbers[i+2]]
-			i += 4
-		case 3:
-			// input (1 = input)
-			numbers[numbers[i+1]] = input
-			i += 2
-		case 4:
-			// output
-			return numbers[numbers[i+1]], nil
-		case 99:
-			//halt
-			break loop
-		}
+func toInt(s string) int {
+	v, err := strconv.Atoi(s)
+	if err != nil {
+		log.Fatal(err)
 	}
-	return 0, fmt.Errorf("no output")
+	return v
 }
