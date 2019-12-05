@@ -10,8 +10,11 @@ import (
 )
 
 func main() {
-	var inputFilePath = flag.String("input", "day1.txt", "input file path")
-	var partB = flag.Bool("partB", false, "enable part b")
+
+	var inputFilePath = flag.String("input", "day5.txt", "input file path")
+	var partB = flag.Bool("partB", false, "enable part b") // todo currently this represents day 2 part b
+
+	var inputVal = flag.Int("inputVal", 0, "program input")
 
 	flag.Parse()
 
@@ -25,9 +28,19 @@ func main() {
 
 	splitInput := strings.Split(input, ",")
 
-	numbers := make([]int, len(splitInput))
+	answer, err := runProgram(splitInput, *partB, *inputVal) // todo: is day 5 using part b of day2 ?
 
-	for i, v := range splitInput {
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println(answer)
+}
+
+func runProgram(program []string, partbnotusedyet bool, input int) (int, error) {
+	numbers := make([]int, len(program))
+
+	for i, v := range program {
 		val, err := strconv.Atoi(v)
 		if err != nil {
 			log.Fatal(err)
@@ -35,50 +48,34 @@ func main() {
 		numbers[i] = val
 	}
 
-	if *partB {
-		for noun := 0; noun <= 99; noun++ {
-			for verb := 0; verb <= 99; verb++ {
-				cpy := make([]int, len(numbers))
-				copy(cpy, numbers)
-				res := evaluate(cpy, noun, verb)
-				if res == 19690720 {
-					answer := 100*noun + verb
-					fmt.Println(answer)
-				}
-			}
-
-		}
-	} else {
-		// part A
-		res := evaluate(numbers, 12, 2)
-		fmt.Println(res)
-	}
-
+	return evaluate(numbers, input)
 }
 
-func evaluate(numbers []int, noun int, verb int) int {
-
-	numbers[1] = noun
-	numbers[2] = verb
-
+func evaluate(numbers []int, input int) (int, error) {
+	i := 0
 loop:
-	for i := 0; i < len(numbers); i += 4 {
+	for i < len(numbers) {
 
 		switch opcode := numbers[i]; opcode {
 		case 1:
-			// add
+			// add (3 = 1 + 2)
 			numbers[numbers[i+3]] = numbers[numbers[i+1]] + numbers[numbers[i+2]]
+			i += 4
 		case 2:
-			// multiply
+			// multiply ( 3 = 1 + 2)
 			numbers[numbers[i+3]] = numbers[numbers[i+1]] * numbers[numbers[i+2]]
+			i += 4
 		case 3:
-			// input
+			// input (1 = input)
+			numbers[numbers[i+1]] = input
+			i += 2
 		case 4:
 			// output
+			return numbers[numbers[i+1]], nil
 		case 99:
 			//halt
 			break loop
 		}
 	}
-	return numbers[0]
+	return 0, fmt.Errorf("no output")
 }
