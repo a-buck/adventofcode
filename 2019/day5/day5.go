@@ -26,15 +26,15 @@ func main() {
 
 	program := strings.Split(input, ",")
 
-	outputs := run(program, *progInput)
+	outputs := run(tointSlice(program), *progInput)
 
 	for _, v := range outputs {
 		fmt.Println(v)
 	}
 }
 
-func run(programStrSlice []string, input int) []int {
-	program := tointSlice(programStrSlice)
+func run(program []int, input int) []int {
+	// program := tointSlice(programStrSlice)
 
 	outputs := make([]int, 0)
 
