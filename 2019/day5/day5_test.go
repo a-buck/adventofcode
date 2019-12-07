@@ -2,6 +2,8 @@ package main
 
 import "testing"
 
+import "github.com/a-buck/adventofcode/2019/intcode"
+
 func TestEchoProgram(t *testing.T) {
 
 	prog := []int{3, 0, 4, 0, 99}
@@ -62,7 +64,7 @@ func TestJumpImmMode(t *testing.T) {
 func doTest(program []int, input int, expected int, t *testing.T) {
 	dst := make([]int, len(program))
 	copy(dst, program)
-	output := run(dst, input)
+	output, _ := intcode.Run(dst, input)
 
 	if len(output) == 0 {
 		t.Errorf("zero length output")
@@ -72,3 +74,5 @@ func doTest(program []int, input int, expected int, t *testing.T) {
 		t.Errorf("got %d, wanted %d", output[len(output)-1], expected)
 	}
 }
+
+//todo move tests to intcode test
