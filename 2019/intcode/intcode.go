@@ -14,11 +14,11 @@ func ReadProgram(input []byte) []int {
 }
 
 // Run intcode
-func Run(program []int, input int) (outputs []int, modifiedProgram []int) {
-
-	outputs = make([]int, 0)
+// returns program state
+func Run(program []int, inputs chan int, outputs chan int) []int {
 
 	instrPtr := 0
+
 loop:
 	for instrPtr < len(program) {
 
@@ -67,13 +67,13 @@ loop:
 		case 3:
 			// input (1 = input)
 			p := program[instrPtr+1]
-			program[p] = input
+			program[p] = <-inputs
 			instrPtr += 2
 		case 4:
 			// output
 			p := program[instrPtr+1]
 			o := program[p]
-			outputs = append(outputs, o)
+			outputs <- o
 			instrPtr += 2
 		case 5:
 			// jump-if-true
@@ -127,12 +127,13 @@ loop:
 			instrPtr += 4
 		case 99:
 			//halt
+			close(outputs)
 			break loop
 		default:
 			log.Fatalf("Oops, unknown opcode %d", opcode)
 		}
 	}
-	return outputs, program
+	return program
 }
 
 func tointSlice(s []string) []int {

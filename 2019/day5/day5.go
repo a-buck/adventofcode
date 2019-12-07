@@ -24,9 +24,13 @@ func main() {
 
 	program := intcode.ReadProgram(inputBytes)
 
-	outputs, _ := intcode.Run(program, *progInput)
+	inputs := make(chan int, 1)
+	outputs := make(chan int, 1)
+	inputs <- *progInput
 
-	for _, v := range outputs {
+	go intcode.Run(program, inputs, outputs)
+
+	for v := range outputs {
 		fmt.Println(v)
 	}
 }

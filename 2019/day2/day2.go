@@ -30,7 +30,9 @@ func main() {
 				copy(programcopy, program)
 				programcopy[1] = noun
 				programcopy[2] = verb
-				_, prog := intcode.Run(programcopy, 0)
+				input := make(chan int, 1)
+				output := make(chan int, 1)
+				prog := intcode.Run(programcopy, input, output)
 				if prog[0] == 19690720 {
 					answer := 100*noun + verb
 					fmt.Println(answer)
@@ -40,9 +42,12 @@ func main() {
 		}
 	} else {
 		// part A
+		input := make(chan int, 1)
+		input <- 0
+		output := make(chan int, 1)
 		program[1] = 12
 		program[2] = 2
-		_, prog := intcode.Run(program, 0)
+		prog := intcode.Run(program, input, output)
 		fmt.Println(prog[0])
 	}
 

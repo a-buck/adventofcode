@@ -64,7 +64,15 @@ func TestJumpImmMode(t *testing.T) {
 func doTest(program []int, input int, expected int, t *testing.T) {
 	dst := make([]int, len(program))
 	copy(dst, program)
-	output, _ := intcode.Run(dst, input)
+	inputsChannel := make(chan int, 1)
+	outputChannel := make(chan int, 1)
+	inputsChannel <- input
+	intcode.Run(dst, inputsChannel, outputChannel)
+
+	output := make([]int, 0)
+	for i := range outputChannel {
+		output = append(output, i)
+	}
 
 	if len(output) == 0 {
 		t.Errorf("zero length output")
