@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"math"
 	"os"
@@ -28,7 +29,13 @@ func main() {
 	}
 	defer file.Close()
 
-	scanner := bufio.NewScanner(file)
+	result := run(file, *partB)
+
+	fmt.Println(result)
+}
+
+func run(reader io.Reader, partB bool) int {
+	scanner := bufio.NewScanner(reader)
 
 	coordToMinDistList := make([]map[coord]int, 0)
 
@@ -85,7 +92,7 @@ func main() {
 		for c2, dist2 := range coordToMinDistList[1] {
 			if c1 == c2 {
 
-				if *partB {
+				if partB {
 					totaldist := dist + dist2
 					if totaldist < smallest {
 						smallest = totaldist
@@ -100,7 +107,7 @@ func main() {
 
 		}
 	}
-	fmt.Println(smallest)
+	return smallest
 }
 
 func abs(x int) int {
