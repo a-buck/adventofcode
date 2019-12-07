@@ -23,29 +23,15 @@ loop:
 	for instrPtr < len(program) {
 
 		instr := program[instrPtr]
-		instrStr := strconv.Itoa(instr)
 
-		var opcode int
-		firstParamImmediateMode := false
-		secondParamImmediateMode := false
-		thirdParamImmediateMode := false
+		opcode := instr % 100
+		instr /= 100
 
-		if len(instrStr) == 1 {
-			opcode = toInt(instrStr)
-		} else {
-			// last 2 digits
-			opcode = toInt(instrStr[len(instrStr)-2 : len(instrStr)])
-		}
-
-		if len(instrStr) >= 3 {
-			firstParamImmediateMode = string(instrStr[len(instrStr)-3]) == "1"
-		}
-		if len(instrStr) >= 4 {
-			secondParamImmediateMode = string(instrStr[len(instrStr)-4]) == "1"
-		}
-		if len(instrStr) >= 5 {
-			thirdParamImmediateMode = string(instrStr[len(instrStr)-5]) == "1"
-		}
+		firstParamImmediateMode := instr%10 == 1
+		instr /= 10
+		secondParamImmediateMode := instr%10 == 1
+		instr /= 10
+		thirdParamImmediateMode := instr%10 == 1
 
 		switch opcode {
 		case 1:
@@ -102,11 +88,14 @@ loop:
 
 			pIdx := instrPtr + 3
 
+			var result int
 			if firstParam < secondParam {
-				updateProgramWithResult(pIdx, program, 1, thirdParamImmediateMode)
+				result = 1
 			} else {
-				updateProgramWithResult(pIdx, program, 0, thirdParamImmediateMode)
+				result = 0
 			}
+
+			updateProgramWithResult(pIdx, program, result, thirdParamImmediateMode)
 
 			instrPtr += 4
 		case 8:
@@ -167,12 +156,4 @@ func getParam(paramIndex int, program []int, isImmediateMode bool) int {
 		return program[p]
 	}
 	return p
-}
-
-func toInt(s string) int {
-	v, err := strconv.Atoi(s)
-	if err != nil {
-		log.Fatal(err)
-	}
-	return v
 }
