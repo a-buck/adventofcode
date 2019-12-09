@@ -17,7 +17,14 @@ func ReadProgram(input []byte) []int {
 // returns program state
 func Run(program []int, inputs chan int, outputs chan int) []int {
 
+	// extend slice...
+	// todo find nicer way than just picking a value to extend by
+	for i := 0; i < 1000; i++ {
+		program = append(program, 0)
+	}
+
 	instrPtr := 0
+	relativeBase := 0
 
 loop:
 	for instrPtr < len(program) {
@@ -27,54 +34,51 @@ loop:
 		opcode := instr % 100
 		instr /= 100
 
-		firstParamImmediateMode := instr%10 == 1
+		firstParamMode := instr % 10
 		instr /= 10
-		secondParamImmediateMode := instr%10 == 1
+		secondParamMode := instr % 10
 		instr /= 10
-		thirdParamImmediateMode := instr%10 == 1
+		thirdParamMode := instr % 10
 
 		switch opcode {
 		case 1:
-			// add (3 = 1 + 2)
-			firstParam := getParam(instrPtr+1, program, firstParamImmediateMode)
-			secondParam := getParam(instrPtr+2, program, secondParamImmediateMode)
+			// add
+			firstParam := getParam(instrPtr+1, program, firstParamMode, relativeBase)
+			secondParam := getParam(instrPtr+2, program, secondParamMode, relativeBase)
 			result := firstParam + secondParam
-			pIdx := instrPtr + 3
-			updateProgramWithResult(pIdx, program, result, thirdParamImmediateMode)
+			updateProgramWithResult(instrPtr+3, program, result, thirdParamMode, relativeBase)
 			instrPtr += 4
 		case 2:
-			// multiply ( 3 = 1 * 2)
-			firstParam := getParam(instrPtr+1, program, firstParamImmediateMode)
-			secondParam := getParam(instrPtr+2, program, secondParamImmediateMode)
+			// multiply
+			firstParam := getParam(instrPtr+1, program, firstParamMode, relativeBase)
+			secondParam := getParam(instrPtr+2, program, secondParamMode, relativeBase)
 			result := firstParam * secondParam
-			pIdx := instrPtr + 3
-			updateProgramWithResult(pIdx, program, result, thirdParamImmediateMode)
+			updateProgramWithResult(instrPtr+3, program, result, thirdParamMode, relativeBase)
 			instrPtr += 4
 		case 3:
-			// input (1 = input)
-			p := program[instrPtr+1]
-			program[p] = <-inputs
+			// input
+			inputVal := <-inputs
+			updateProgramWithResult(instrPtr+1, program, inputVal, firstParamMode, relativeBase)
 			instrPtr += 2
 		case 4:
 			// output
-			p := program[instrPtr+1]
-			o := program[p]
+			o := getParam(instrPtr+1, program, firstParamMode, relativeBase) // new
 			outputs <- o
 			instrPtr += 2
 		case 5:
 			// jump-if-true
-			firstParam := getParam(instrPtr+1, program, firstParamImmediateMode)
-			secondParam := getParam(instrPtr+2, program, secondParamImmediateMode)
+			firstParam := getParam(instrPtr+1, program, firstParamMode, relativeBase)
+			secondParam := getParam(instrPtr+2, program, secondParamMode, relativeBase)
 
 			if firstParam != 0 {
-				instrPtr = secondParam
+				instrPtr = secondParam // todo maybe ptr should be 64 bit too?
 			} else {
 				instrPtr += 3
 			}
 		case 6:
 			// jump-if-false
-			firstParam := getParam(instrPtr+1, program, firstParamImmediateMode)
-			secondParam := getParam(instrPtr+2, program, secondParamImmediateMode)
+			firstParam := getParam(instrPtr+1, program, firstParamMode, relativeBase)
+			secondParam := getParam(instrPtr+2, program, secondParamMode, relativeBase)
 
 			if firstParam == 0 {
 				instrPtr = secondParam
@@ -83,8 +87,8 @@ loop:
 			}
 		case 7:
 			//less than
-			firstParam := getParam(instrPtr+1, program, firstParamImmediateMode)
-			secondParam := getParam(instrPtr+2, program, secondParamImmediateMode)
+			firstParam := getParam(instrPtr+1, program, firstParamMode, relativeBase)
+			secondParam := getParam(instrPtr+2, program, secondParamMode, relativeBase)
 
 			pIdx := instrPtr + 3
 
@@ -95,12 +99,12 @@ loop:
 				result = 0
 			}
 
-			updateProgramWithResult(pIdx, program, result, thirdParamImmediateMode)
+			updateProgramWithResult(pIdx, program, result, thirdParamMode, relativeBase)
 
 			instrPtr += 4
 		case 8:
-			firstParam := getParam(instrPtr+1, program, firstParamImmediateMode)
-			secondParam := getParam(instrPtr+2, program, secondParamImmediateMode)
+			firstParam := getParam(instrPtr+1, program, firstParamMode, relativeBase)
+			secondParam := getParam(instrPtr+2, program, secondParamMode, relativeBase)
 
 			pIdx := instrPtr + 3
 
@@ -111,9 +115,15 @@ loop:
 				result = 0
 			}
 
-			updateProgramWithResult(pIdx, program, result, thirdParamImmediateMode)
+			updateProgramWithResult(pIdx, program, result, thirdParamMode, relativeBase)
 
 			instrPtr += 4
+
+		case 9:
+			// adjusts relative base
+			firstParam := getParam(instrPtr+1, program, firstParamMode, relativeBase)
+			relativeBase += firstParam
+			instrPtr += 2
 		case 99:
 			//halt
 			close(outputs)
@@ -139,21 +149,36 @@ func tointSlice(s []string) []int {
 	return numbers
 }
 
-func updateProgramWithResult(idx int, program []int, result int, isImmediateMode bool) {
-	if !isImmediateMode {
+func updateProgramWithResult(idx int, program []int, result int, mode int, relativeBase int) {
+	if mode == 0 {
 		// position mode
 		p := program[idx]
 		program[p] = result
-	} else {
+	} else if mode == 1 {
+		// immediate mode
 		program[idx] = result
+	} else if mode == 2 {
+		// relative mode
+		p := program[idx]
+		program[relativeBase+p] = result
 	}
 }
 
-func getParam(paramIndex int, program []int, isImmediateMode bool) int {
+func getParam(paramIndex int, program []int, mode int, relativeBase int) int {
 	p := program[paramIndex]
-	if !isImmediateMode {
+	var val int
+	if mode == 0 {
 		// position mode
-		return program[p]
+		val = program[p]
+	} else if mode == 1 {
+		// immediate mode
+		val = p
+	} else if mode == 2 {
+		// relative mode
+		val = program[relativeBase+p]
+	} else {
+		panic("unknown param modemode")
 	}
-	return p
+
+	return val
 }
