@@ -53,6 +53,17 @@ func main() {
 
 	numberPanelsPaintedAtLeastOnce := 0
 
+	directions := map[int]coord{
+		// up
+		0: coord{x: 0, y: 1},
+		// right
+		1: coord{x: 1, y: 0},
+		// down
+		2: coord{x: 0, y: -1},
+		// left
+		3: coord{x: -1, y: 0},
+	}
+
 	for i := range output {
 		if isFirstParam {
 			color = i
@@ -65,14 +76,7 @@ func main() {
 				// painting a new panel
 				numberPanelsPaintedAtLeastOnce++
 			}
-
-			if color == 1 {
-				// white
-				panels[currPosition] = 1
-			} else {
-				// black
-				panels[currPosition] = 0
-			}
+			panels[currPosition] = color
 
 			// 2) change direction
 			if direction == 0 {
@@ -90,23 +94,11 @@ func main() {
 			}
 
 			// 3) move forward 1
-			if currDirection == 0 {
-				// go up
-				currPosition = coord{currPosition.x, currPosition.y + 1}
-			} else if currDirection == 1 {
-				// go right
-				currPosition = coord{currPosition.x + 1, currPosition.y}
-			} else if currDirection == 2 {
-				// go down
-				currPosition = coord{currPosition.x, currPosition.y - 1}
-			} else if currDirection == 3 {
-				// go left
-				currPosition = coord{currPosition.x - 1, currPosition.y}
-			}
+			deltaPos := directions[currDirection]
+			currPosition = currPosition.add(deltaPos)
 
 			// 4) send to camera color of new position
 			camera <- panels[currPosition]
-
 		}
 
 		isFirstParam = !isFirstParam
@@ -157,4 +149,8 @@ func print(panels map[coord]int) {
 		fmt.Printf("\n")
 	}
 
+}
+
+func (c coord) add(other coord) coord {
+	return coord{x: c.x + other.x, y: c.y + other.y}
 }
