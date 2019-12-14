@@ -5,12 +5,14 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"math"
 
 	"github.com/a-buck/adventofcode/2019/intcode"
 )
 
 var (
 	inputFilePath = flag.String("input", "day11.txt", "input file path")
+	partB         = flag.Bool("partB", false, "enable part b")
 )
 
 type coord struct {
@@ -42,7 +44,12 @@ func main() {
 	var currPosition coord
 	panels := make(map[coord]int) // color of panels
 
-	camera <- 0 // starts off on black
+	if *partB {
+		// start on white panel
+		panels[currPosition] = 1
+	}
+
+	camera <- panels[currPosition]
 
 	numberPanelsPaintedAtLeastOnce := 0
 
@@ -105,6 +112,49 @@ func main() {
 		isFirstParam = !isFirstParam
 	}
 
-	fmt.Println(numberPanelsPaintedAtLeastOnce)
+	if *partB {
+		print(panels)
+	} else {
+		// part A
+		fmt.Println(numberPanelsPaintedAtLeastOnce)
+	}
+
+}
+
+func print(panels map[coord]int) {
+
+	maxX := math.MinInt32
+	maxY := math.MinInt32
+
+	minX := math.MaxInt32
+	minY := math.MaxInt32
+
+	for p := range panels {
+		if p.x > maxX {
+			maxX = p.x
+		}
+		if p.x < minX {
+			minX = p.x
+		}
+
+		if p.y > maxY {
+			maxY = p.y
+		}
+		if p.y < minY {
+			minY = p.y
+		}
+	}
+
+	for row := maxY; row >= minY; row-- {
+		for col := minX; col < maxX; col++ {
+			color := panels[coord{x: col, y: row}]
+			if color == 1 {
+				fmt.Printf("#")
+			} else {
+				fmt.Printf(" ")
+			}
+		}
+		fmt.Printf("\n")
+	}
 
 }
