@@ -14,6 +14,7 @@ import (
 var (
 	inputFilePath = flag.String("input", "day12.txt", "input file path")
 	steps         = flag.Int("steps", 1000, "number of timesteps to simulate")
+	partB         = flag.Bool("partB", false, "enable part b")
 )
 
 type moon struct {
@@ -38,72 +39,97 @@ func main() {
 
 	moons := readInput(file)
 
-	fmt.Printf("%+v\n", moons)
+	// fmt.Printf("%+v\n", moons)
 
-	process(moons, *steps)
+	process(moons, *steps, *partB)
 
 }
 
-func process(moons []moon, steps int) {
-	for t := 1; t <= steps; t++ {
-		// time step
+type fourmoons struct {
+	m1 moon
+	m2 moon
+	m3 moon
+	m4 moon
+}
 
-		// 1) apply gravity to update velocity
-		for i := 0; i < len(moons)-1; i++ {
-			for j := i; j < len(moons); j++ {
-				m1 := moons[i]
-				m2 := moons[j]
+func process(moons []moon, steps int, partB bool) {
+	if partB {
+		seen := make(map[fourmoons]bool)
 
-				// x
-				if m1.position.x < m2.position.x {
-					moons[i].velocity.x++
-					moons[j].velocity.x--
-				} else if m1.position.x > m2.position.x {
-					moons[i].velocity.x--
-					moons[j].velocity.x++
-				}
-
-				// y
-				if m1.position.y < m2.position.y {
-					moons[i].velocity.y++
-					moons[j].velocity.y--
-				} else if m1.position.y > m2.position.y {
-					moons[i].velocity.y--
-					moons[j].velocity.y++
-				}
-
-				// z
-				if m1.position.z < m2.position.z {
-					moons[i].velocity.z++
-					moons[j].velocity.z--
-				} else if m1.position.z > m2.position.z {
-					moons[i].velocity.z--
-					moons[j].velocity.z++
-				}
-
+		t := 0
+		for ; ; t++ {
+			doTimeStep(moons)
+			fm := fourmoons{moons[0], moons[1], moons[2], moons[3]}
+			_, ok := seen[fm]
+			if ok {
+				break
+			} else {
+				seen[fm] = true
 			}
-		} // end apply gravity
+		}
+		fmt.Printf("Steps: %d\n", t)
+	} else {
+		// part A
+		for t := 1; t <= steps; t++ {
+			doTimeStep(moons)
 
-		// 2) apply velocity to update position
-		for i, m := range moons {
-			moons[i].position = m.position.add(m.velocity)
+			fmt.Printf("After %d steps:\n", t)
+			for _, m := range moons {
+				fmt.Printf("pos=<x=%d, y=%d, z=%d>, vel=<x=%d, y=%d, z=%d>\n", m.position.x, m.position.y, m.position.z, m.velocity.x, m.velocity.y, m.velocity.z)
+			}
+
 		}
 
-		fmt.Printf("After %d steps:\n", t)
+		totalEnergy := 0
 		for _, m := range moons {
-			fmt.Printf("pos=<x=%d, y=%d, z=%d>, vel=<x=%d, y=%d, z=%d>\n", m.position.x, m.position.y, m.position.z, m.velocity.x, m.velocity.y, m.velocity.z)
+			e := m.kineticEnergy() * m.potentialEnergy()
+			totalEnergy += e
 		}
 
-	} // end timestep
+		fmt.Printf("%d\n", totalEnergy)
+	}
+}
 
-	totalEnergy := 0
-	for _, m := range moons {
-		e := m.kineticEnergy() * m.potentialEnergy()
-		totalEnergy += e
+func doTimeStep(moons []moon) {
+	for i := 0; i < len(moons)-1; i++ {
+		for j := i; j < len(moons); j++ {
+			m1 := moons[i]
+			m2 := moons[j]
+
+			// x
+			if m1.position.x < m2.position.x {
+				moons[i].velocity.x++
+				moons[j].velocity.x--
+			} else if m1.position.x > m2.position.x {
+				moons[i].velocity.x--
+				moons[j].velocity.x++
+			}
+
+			// y
+			if m1.position.y < m2.position.y {
+				moons[i].velocity.y++
+				moons[j].velocity.y--
+			} else if m1.position.y > m2.position.y {
+				moons[i].velocity.y--
+				moons[j].velocity.y++
+			}
+
+			// z
+			if m1.position.z < m2.position.z {
+				moons[i].velocity.z++
+				moons[j].velocity.z--
+			} else if m1.position.z > m2.position.z {
+				moons[i].velocity.z--
+				moons[j].velocity.z++
+			}
+
+		}
 	}
 
-	fmt.Printf("%d\n", totalEnergy)
-
+	// 2) apply velocity to update position
+	for i, m := range moons {
+		moons[i].position = m.position.add(m.velocity)
+	}
 }
 
 func readInput(r io.Reader) []moon {
