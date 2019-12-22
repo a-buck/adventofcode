@@ -22,11 +22,7 @@ type moon struct {
 	velocity coord
 }
 
-type coord struct {
-	x int
-	y int
-	z int
-}
+type coord [3]int // x, y, z
 
 func main() {
 	flag.Parse()
@@ -39,35 +35,34 @@ func main() {
 
 	moons := readInput(file)
 
-	// fmt.Printf("%+v\n", moons)
-
 	process(moons, *steps, *partB)
-
-}
-
-type fourmoons struct {
-	m1 moon
-	m2 moon
-	m3 moon
-	m4 moon
 }
 
 func process(moons []moon, steps int, partB bool) {
 	if partB {
-		seen := make(map[fourmoons]bool)
+		initial := make([]moon, 0, len(moons))
+		for _, m := range moons {
+			initial = append(initial, m)
+		}
 
-		t := 0
-		for ; ; t++ {
+		intervals := make([]*int, 3)
+
+		for t := 1; containsNil(intervals); t++ {
 			doTimeStep(moons)
-			fm := fourmoons{moons[0], moons[1], moons[2], moons[3]}
-			_, ok := seen[fm]
-			if ok {
-				break
-			} else {
-				seen[fm] = true
+
+			for c := 0; c < 3; c++ {
+				if intervals[c] == nil {
+					if isSame(initial, moons, c) {
+						t := t
+						intervals[c] = &t
+					}
+				}
 			}
 		}
-		fmt.Printf("Steps: %d\n", t)
+
+		ans := lcm(lcm(*intervals[0], *intervals[1]), *intervals[2])
+
+		fmt.Printf("%d\n", ans)
 	} else {
 		// part A
 		for t := 1; t <= steps; t++ {
@@ -75,9 +70,8 @@ func process(moons []moon, steps int, partB bool) {
 
 			fmt.Printf("After %d steps:\n", t)
 			for _, m := range moons {
-				fmt.Printf("pos=<x=%d, y=%d, z=%d>, vel=<x=%d, y=%d, z=%d>\n", m.position.x, m.position.y, m.position.z, m.velocity.x, m.velocity.y, m.velocity.z)
+				fmt.Printf("pos=<x=%d, y=%d, z=%d>, vel=<x=%d, y=%d, z=%d>\n", m.position[0], m.position[1], m.position[2], m.velocity[0], m.velocity[1], m.velocity[2])
 			}
-
 		}
 
 		totalEnergy := 0
@@ -91,45 +85,42 @@ func process(moons []moon, steps int, partB bool) {
 }
 
 func doTimeStep(moons []moon) {
+	// update moon velocities
 	for i := 0; i < len(moons)-1; i++ {
 		for j := i; j < len(moons); j++ {
-			m1 := moons[i]
-			m2 := moons[j]
-
 			// x
-			if m1.position.x < m2.position.x {
-				moons[i].velocity.x++
-				moons[j].velocity.x--
-			} else if m1.position.x > m2.position.x {
-				moons[i].velocity.x--
-				moons[j].velocity.x++
-			}
-
+			updateVelocity(moons, i, j, 0)
 			// y
-			if m1.position.y < m2.position.y {
-				moons[i].velocity.y++
-				moons[j].velocity.y--
-			} else if m1.position.y > m2.position.y {
-				moons[i].velocity.y--
-				moons[j].velocity.y++
-			}
-
+			updateVelocity(moons, i, j, 1)
 			// z
-			if m1.position.z < m2.position.z {
-				moons[i].velocity.z++
-				moons[j].velocity.z--
-			} else if m1.position.z > m2.position.z {
-				moons[i].velocity.z--
-				moons[j].velocity.z++
-			}
-
+			updateVelocity(moons, i, j, 2)
 		}
 	}
 
-	// 2) apply velocity to update position
+	// apply velocity to update position
 	for i, m := range moons {
 		moons[i].position = m.position.add(m.velocity)
 	}
+}
+
+func updateVelocity(moons []moon, i, j, c int) {
+	if moons[i].position[c] < moons[j].position[c] {
+		moons[i].velocity[c]++
+		moons[j].velocity[c]--
+	} else if moons[i].position[c] > moons[j].position[c] {
+		moons[i].velocity[c]--
+		moons[j].velocity[c]++
+	}
+}
+
+func isSame(a []moon, b []moon, c int) bool {
+	for i := range b {
+		if !(b[i].position[c] == a[i].position[c] &&
+			b[i].velocity[c] == a[i].velocity[c]) {
+			return false
+		}
+	}
+	return true
 }
 
 func readInput(r io.Reader) []moon {
@@ -149,7 +140,7 @@ func readInput(r io.Reader) []moon {
 		x := toInt(result["x"])
 		y := toInt(result["y"])
 		z := toInt(result["z"])
-		m := moon{position: coord{x: x, y: y, z: z}}
+		m := moon{position: coord{x, y, z}}
 		moons = append(moons, m)
 	}
 	return moons
@@ -164,17 +155,17 @@ func toInt(s string) int {
 }
 
 func (c coord) add(other coord) coord {
-	return coord{x: c.x + other.x, y: c.y + other.y, z: c.z + other.z}
+	return coord{c[0] + other[0], c[1] + other[1], c[2] + other[2]}
 }
 
 func (m moon) potentialEnergy() int {
 	p := m.position
-	return abs(p.x) + abs(p.y) + abs(p.z)
+	return abs(p[0]) + abs(p[1]) + abs(p[2])
 }
 
 func (m moon) kineticEnergy() int {
 	v := m.velocity
-	return abs(v.x) + abs(v.y) + abs(v.z)
+	return abs(v[0]) + abs(v[1]) + abs(v[2])
 }
 
 func abs(i int) int {
@@ -182,4 +173,27 @@ func abs(i int) int {
 		return -i
 	}
 	return i
+}
+
+func lcm(a, b int) int {
+	return a * b / gcd(a, b)
+}
+
+func gcd(a, b int) int {
+	var t int
+	for b != 0 {
+		t = b
+		b = a % b
+		a = t
+	}
+	return a
+}
+
+func containsNil(s []*int) bool {
+	for _, v := range s {
+		if v == nil {
+			return true
+		}
+	}
+	return false
 }
