@@ -12,6 +12,7 @@ import (
 var (
 	inputFilePath = flag.String("input", "day16.txt", "input file path")
 	phases        = flag.Int("phases", 100, "number of phases")
+	partB         = flag.Bool("partB", false, "enable part b")
 )
 
 func main() {
@@ -25,24 +26,60 @@ func main() {
 
 	strSeq := strings.Split(string(inputBytes), "")
 
-	intSeq := make([]int, len(strSeq))
+	repeats := 1
+	offset := 0
 
-	for i, v := range strSeq {
-		n, err := strconv.Atoi(v)
+	if *partB {
+		repeats = 10000
+
+		offset, err = strconv.Atoi(strings.Join(strSeq[:7], ""))
 		if err != nil {
 			log.Fatal(err)
 		}
-		intSeq[i] = n
+
+		if offset < (len(strSeq) * repeats / 2) {
+			log.Fatalf("part b only works for offset >= n/2")
+		}
+
+		if offset > len(strSeq)*repeats-1 {
+			log.Fatalf("offset: %d is larger than size of sequence: %d", offset, len(strSeq)*repeats)
+		}
+
 	}
 
-	res := ftt(intSeq, *phases)
-
-	resStr := make([]string, len(res))
-	for i, v := range res {
-		resStr[i] = strconv.Itoa(v)
+	// extend input
+	seq := make([]int, 0, len(strSeq)*repeats)
+	for r := 0; r < repeats; r++ {
+		for _, v := range strSeq {
+			n, err := strconv.Atoi(v)
+			if err != nil {
+				log.Fatal(err)
+			}
+			seq = append(seq, n)
+		}
 	}
 
-	fmt.Println(strings.Join(resStr[:8], ""))
+	var res []int
+
+	if *partB {
+		res = sumBackwards(seq, *phases, offset)
+	} else {
+		// part A
+		res = ftt(seq, *phases)
+	}
+
+	for i := offset; i < offset+8; i++ {
+		fmt.Printf("%d", res[i])
+	}
+}
+
+func sumBackwards(seq []int, phases, offset int) []int {
+	for p := 0; p < phases; p++ { // phase
+		for e := len(seq) - 2; e >= offset; e-- { // element
+			seq[e] = abs(seq[e+1]+seq[e]) % 10
+		}
+	}
+	return seq
 }
 
 func ftt(seq []int, phases int) []int {
