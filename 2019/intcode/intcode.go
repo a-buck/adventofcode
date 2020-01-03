@@ -6,8 +6,10 @@ import (
 	"strings"
 )
 
+type Program []int
+
 // Read program
-func ReadProgram(input []byte) []int {
+func ReadProgram(input []byte) Program {
 	tokens := strings.Split(string(input), ",")
 	program := tointSlice(tokens)
 	return program
@@ -19,7 +21,7 @@ func Run(program []int, inputs chan int, outputs chan int) []int {
 
 	// extend slice...
 	// todo find nicer way than just picking a value to extend by
-	for i := 0; i < 1000; i++ {
+	for i := 0; i < 10000; i++ {
 		program = append(program, 0)
 	}
 
@@ -181,4 +183,10 @@ func getParam(paramIndex int, program []int, mode int, relativeBase int) int {
 	}
 
 	return val
+}
+
+func (p Program) Copy() Program {
+	cpy := make([]int, len(p))
+	copy(cpy, p)
+	return cpy
 }
