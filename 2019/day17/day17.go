@@ -55,7 +55,7 @@ func main() {
 	coords := make(map[coord]rune)
 
 	for o := range partAOutputs {
-		fmt.Printf("%s", string(o))
+		fmt.Printf("%c", rune(o))
 		if rune(o) == '\n' {
 			row++
 			col = 0
