@@ -30,6 +30,7 @@ func (pq MinPriorityQueue) Swap(i, j int) {
 	pq[j].Index = j
 }
 
+// Push item
 func (pq *MinPriorityQueue) Push(x interface{}) {
 	n := len(*pq)
 	item := x.(*Item)
@@ -37,6 +38,7 @@ func (pq *MinPriorityQueue) Push(x interface{}) {
 	*pq = append(*pq, item)
 }
 
+// Pop item
 func (pq *MinPriorityQueue) Pop() interface{} {
 	old := *pq
 	n := len(old)

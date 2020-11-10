@@ -178,11 +178,12 @@ func process(compressedAdjList map[coord][]edge, coords map[coord]rune, partB bo
 		}
 		return total
 
-	} else {
-		// part A
-		dist := distToGetAllKeys(compressedAdjList, coords, keysBitMask, roots[0])
-		return dist
 	}
+
+	// part A
+	dist := distToGetAllKeys(compressedAdjList, coords, keysBitMask, roots[0])
+	return dist
+
 }
 
 // dijkstra to get dist for all keys

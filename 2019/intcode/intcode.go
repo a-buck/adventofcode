@@ -6,9 +6,10 @@ import (
 	"strings"
 )
 
+// Program ...
 type Program []int
 
-// Read program
+// ReadProgram ...
 func ReadProgram(input []byte) Program {
 	tokens := strings.Split(string(input), ",")
 	program := tointSlice(tokens)
@@ -185,6 +186,7 @@ func getParam(paramIndex int, program []int, mode int, relativeBase int) int {
 	return val
 }
 
+// Copy program
 func (p Program) Copy() Program {
 	cpy := make([]int, len(p))
 	copy(cpy, p)
