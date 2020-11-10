@@ -22,8 +22,7 @@ jobs:
       uses: actions/checkout@v2
 
     - name: Get dependencies
-      run: |
-        go get -u golang.org/x/lint/golint
+      run: go get -u golang.org/x/lint/golint
 
     - name: Test
       run: go test -v ./...
