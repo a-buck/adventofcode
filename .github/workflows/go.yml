@@ -30,3 +30,6 @@ jobs:
 
     - name: Lint
       run: golint ./...
+
+    - name: Vet
+      run: go vet ./...
