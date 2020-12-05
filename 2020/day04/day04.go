@@ -22,9 +22,9 @@ var (
 		"iyr": validateIyr,
 		"eyr": validateEyr,
 		"hgt": validateHgt,
-		"hcl": validateHcl,
-		"ecl": validateEcl,
-		"pid": validatePid,
+		"hcl": regexp.MustCompile(`^#[0-9a-f]{6}$`).MatchString,
+		"ecl": regexp.MustCompile("^amb|blu|brn|gry|grn|hzl|oth$").MatchString,
+		"pid": regexp.MustCompile(`^\d{9}$`).MatchString,
 		"cid": validateCid,
 	}
 )
@@ -96,15 +96,6 @@ func hasValidValues(fields map[string]string) bool {
 	return true
 }
 
-func oneof(val string, s []string) bool {
-	for _, t := range s {
-		if val == t {
-			return true
-		}
-	}
-	return false
-}
-
 func containsAll(m map[string]string, keys ...string) bool {
 	for _, f := range keys {
 		_, ok := m[f]
@@ -150,22 +141,6 @@ func validateHgt(val string) bool {
 		// units not recognised
 		return false
 	}
-}
-
-func validateHcl(val string) bool {
-	expr := regexp.MustCompile(`^#[0-9a-f]{6}$`)
-	match := expr.FindStringSubmatch(val)
-	return len(match) > 0
-}
-
-func validateEcl(val string) bool {
-	return oneof(val, []string{"amb", "blu", "brn", "gry", "grn", "hzl", "oth"})
-}
-
-func validatePid(val string) bool {
-	expr := regexp.MustCompile(`^\d{9}$`)
-	match := expr.FindStringSubmatch(val)
-	return len(match) > 0
 }
 
 func validateCid(_ string) bool {
