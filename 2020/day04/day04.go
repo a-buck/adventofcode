@@ -12,9 +12,21 @@ import (
 	"strings"
 )
 
+type validateFn func(string) bool
+
 var (
 	inputFilePath = flag.String("input", "day04.txt", "input file path")
 	partB         = flag.Bool("partB", false, "enable part b")
+	validationFns = map[string]validateFn{
+		"byr": validateByr,
+		"iyr": validateIyr,
+		"eyr": validateEyr,
+		"hgt": validateHgt,
+		"hcl": validateHcl,
+		"ecl": validateEcl,
+		"pid": validatePid,
+		"cid": validateCid,
+	}
 )
 
 func main() {
@@ -75,49 +87,9 @@ func run(r io.Reader, partB bool) int {
 	return valid
 }
 
-func validate(key, val string) bool {
-	switch key {
-	case "byr":
-		return betweenInc(val, 1920, 2002)
-	case "iyr":
-		return betweenInc(val, 2010, 2020)
-	case "eyr":
-		return betweenInc(val, 2020, 2030)
-	case "hgt":
-		expr := regexp.MustCompile(`^(\d+)([a-z]+)$`)
-		match := expr.FindStringSubmatch(val)
-		if len(match) != 3 {
-			return false
-		}
-		heightUnits := match[2]
-		if heightUnits == "cm" {
-			return betweenInc(match[1], 150, 193)
-		} else if heightUnits == "in" {
-			return betweenInc(match[1], 59, 76)
-		} else {
-			// units not recognised
-			return false
-		}
-	case "hcl":
-		expr := regexp.MustCompile(`^#[0-9a-f]{6}$`)
-		match := expr.FindStringSubmatch(val)
-		return len(match) > 0
-	case "ecl":
-		return oneof(val, []string{"amb", "blu", "brn", "gry", "grn", "hzl", "oth"})
-	case "pid":
-		expr := regexp.MustCompile(`^\d{9}$`)
-		match := expr.FindStringSubmatch(val)
-		return len(match) > 0
-	case "cid":
-		return true
-	}
-	// field not recognised
-	return false
-}
-
 func hasValidValues(fields map[string]string) bool {
 	for k, v := range fields {
-		if !validate(k, v) {
+		if !validationFns[k](v) {
 			return false
 		}
 	}
@@ -149,4 +121,53 @@ func betweenInc(v string, lo, hi int) bool {
 		return false
 	}
 	return i >= lo && i <= hi
+}
+
+func validateByr(val string) bool {
+	return betweenInc(val, 1920, 2002)
+}
+
+func validateIyr(val string) bool {
+	return betweenInc(val, 2010, 2020)
+}
+
+func validateEyr(val string) bool {
+	return betweenInc(val, 2020, 2030)
+}
+
+func validateHgt(val string) bool {
+	expr := regexp.MustCompile(`^(\d+)([a-z]+)$`)
+	match := expr.FindStringSubmatch(val)
+	if len(match) != 3 {
+		return false
+	}
+	heightUnits := match[2]
+	if heightUnits == "cm" {
+		return betweenInc(match[1], 150, 193)
+	} else if heightUnits == "in" {
+		return betweenInc(match[1], 59, 76)
+	} else {
+		// units not recognised
+		return false
+	}
+}
+
+func validateHcl(val string) bool {
+	expr := regexp.MustCompile(`^#[0-9a-f]{6}$`)
+	match := expr.FindStringSubmatch(val)
+	return len(match) > 0
+}
+
+func validateEcl(val string) bool {
+	return oneof(val, []string{"amb", "blu", "brn", "gry", "grn", "hzl", "oth"})
+}
+
+func validatePid(val string) bool {
+	expr := regexp.MustCompile(`^\d{9}$`)
+	match := expr.FindStringSubmatch(val)
+	return len(match) > 0
+}
+
+func validateCid(_ string) bool {
+	return true
 }
