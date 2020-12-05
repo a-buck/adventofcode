@@ -8,12 +8,9 @@ import (
 	"log"
 	"os"
 	"sort"
+	"strconv"
+	"strings"
 )
-
-type seat struct {
-	row int
-	col int
-}
 
 var (
 	inputFilePath = flag.String("input", "day05.txt", "input file path")
@@ -42,11 +39,11 @@ func run(r io.Reader, partB bool) int {
 	ids := make([]int, 0)
 
 	for scanner.Scan() {
-		seat := decodeSeat(scanner.Text())
-		if seat.id() > maxID {
-			maxID = seat.id()
+		seatID := getSeatID(scanner.Text())
+		if seatID > maxID {
+			maxID = seatID
 		}
-		ids = append(ids, seat.id())
+		ids = append(ids, seatID)
 	}
 
 	if partB {
@@ -66,29 +63,16 @@ func run(r io.Reader, partB bool) int {
 	}
 }
 
-func decodeSeat(s string) seat {
-	chars := []rune(s)
+func getSeatID(s string) int {
+	s = strings.ReplaceAll(s, "F", "0")
+	s = strings.ReplaceAll(s, "L", "0")
+	s = strings.ReplaceAll(s, "B", "1")
+	s = strings.ReplaceAll(s, "R", "1")
 
-	row := binarySearch(chars[:7], 0, 127)
-	col := binarySearch(chars[7:], 0, 7)
+	val, err := strconv.ParseInt(s, 2, 0)
 
-	return seat{row, col}
-}
-
-func binarySearch(chars []rune, lo, hi int) int {
-
-	for i := 0; lo < hi; i++ {
-		mid := lo + (hi-lo)/2
-		c := chars[i]
-		if c == 'F' || c == 'L' {
-			hi = mid
-		} else {
-			lo = mid + 1
-		}
+	if err != nil {
+		log.Fatal(err)
 	}
-	return lo
-}
-
-func (s seat) id() int {
-	return s.row*8 + s.col
+	return int(val)
 }
