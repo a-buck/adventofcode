@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"regexp"
 	"strconv"
 	"strings"
 )
@@ -40,20 +39,18 @@ func run(content string, partB bool) int {
 	adjlist := make(map[string][]edge, len(lines))
 
 	for _, line := range lines {
+		line = line[:len(line)-1]
 		line = strings.ReplaceAll(line, "bags", "")
 		line = strings.ReplaceAll(line, "bag", "")
 
 		lineParts := strings.Split(line, " contain ")
 		parentBag := strings.TrimSpace(lineParts[0])
 
-		childBags := regexp.MustCompile("[.,]").Split(lineParts[1], -1)
+		childBags := strings.Split(lineParts[1], ",")
 
 		childBagsTrimmed := make([]string, 0, len(childBags))
 		for _, c := range childBags {
-			trimmed := strings.TrimSpace(c)
-			if trimmed != "" {
-				childBagsTrimmed = append(childBagsTrimmed, trimmed)
-			}
+			childBagsTrimmed = append(childBagsTrimmed, strings.TrimSpace(c))
 		}
 
 		adjlist[parentBag] = make([]edge, 0)
@@ -62,11 +59,13 @@ func run(content string, partB bool) int {
 			if b == "no other" {
 				continue
 			}
-			amount, err := strconv.Atoi(b[0:1])
+			parts := strings.SplitN(b, " ", 2)
+
+			amount, err := strconv.Atoi(parts[0])
 			if err != nil {
 				log.Fatal(err)
 			}
-			childName := b[2:]
+			childName := parts[1]
 			e := edge{childName, amount}
 			adjlist[parentBag] = append(adjlist[parentBag], e)
 		}
