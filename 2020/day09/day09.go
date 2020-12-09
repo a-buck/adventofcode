@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	inputFilePath  = flag.String("input", "day08.txt", "input file path")
+	inputFilePath  = flag.String("input", "day09.txt", "input file path")
 	preambleLength = flag.Int("preamble", 25, "preamble length")
 )
 
