@@ -65,8 +65,7 @@ func partA(numbers []int) int {
 
 func partB(numbers []int) int {
 	sort.Ints(numbers)
-	adjlist := buildAdjlist(numbers)
-	reversed := reverseAdjlist(adjlist)
+	reversed := buildReverseAdjlist(numbers)
 
 	childPathsCount := make(map[int]int)
 
@@ -92,14 +91,13 @@ func partB(numbers []int) int {
 	return childPathsCount[0]
 }
 
-func buildAdjlist(numbers []int) map[int][]int {
+func buildReverseAdjlist(numbers []int) map[int][]int {
 
-	numbersmap := make(map[int]bool)
-
+	exists := make(map[int]bool)
 	max := 0
 
 	for _, n := range numbers {
-		numbersmap[n] = true
+		exists[n] = true
 		if n > max {
 			max = n
 		}
@@ -107,35 +105,25 @@ func buildAdjlist(numbers []int) map[int][]int {
 
 	adjlist := make(map[int][]int)
 
-	for _, v := range numbers {
+	for _, parent := range numbers {
 		for i := 1; i <= 3; i++ {
-			if _, ok := numbersmap[v+i]; ok {
-				adjlist[v] = append(adjlist[v], v+i)
+			child := parent + i
+			if _, ok := exists[child]; ok {
+
+				adjlist[child] = append(adjlist[child], parent)
 			}
 		}
 	}
 
-	// add neighbours from 0
-	for i := 1; i <= 3; i++ {
-		if _, ok := numbersmap[i]; ok {
-			adjlist[0] = append(adjlist[0], i)
+	// neighbours to 0
+	for child := 1; child <= 3; child++ {
+		if _, ok := exists[child]; ok {
+			adjlist[child] = append(adjlist[child], 0)
 		}
 	}
 
-	// add neighbours from max to device
-	adjlist[max] = append(adjlist[max], max+3)
+	// device to max adapter
+	adjlist[max+3] = append(adjlist[max+3], max)
 
 	return adjlist
-}
-
-func reverseAdjlist(adjlist map[int][]int) map[int][]int {
-	reversed := make(map[int][]int)
-
-	for k, v := range adjlist {
-		for _, v2 := range v {
-			reversed[v2] = append(reversed[v2], k)
-		}
-	}
-
-	return reversed
 }
