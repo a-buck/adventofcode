@@ -34,6 +34,8 @@ func main() {
 		numbers[i] = n
 	}
 
+	sort.Ints(numbers)
+
 	aAns := partA(numbers)
 	println(aAns)
 
@@ -41,12 +43,11 @@ func main() {
 	println(bAns)
 }
 
+// numbers must be ordered
 func partA(numbers []int) int {
 	if len(numbers) == 0 {
 		return 0
 	}
-
-	sort.Ints(numbers)
 
 	diffs := make(map[int]int) // map of diff to count
 
@@ -63,8 +64,8 @@ func partA(numbers []int) int {
 	return diffs[1] * diffs[3]
 }
 
+// numbers must be ordered
 func partB(numbers []int) int {
-	sort.Ints(numbers)
 	reversed := buildReverseAdjlist(numbers)
 
 	childPathsCount := make(map[int]int)
@@ -91,16 +92,12 @@ func partB(numbers []int) int {
 	return childPathsCount[0]
 }
 
+// numbers must be ordered
 func buildReverseAdjlist(numbers []int) map[int][]int {
-
 	exists := make(map[int]bool)
-	max := 0
 
 	for _, n := range numbers {
 		exists[n] = true
-		if n > max {
-			max = n
-		}
 	}
 
 	adjlist := make(map[int][]int)
@@ -123,6 +120,7 @@ func buildReverseAdjlist(numbers []int) map[int][]int {
 	}
 
 	// device to max adapter
+	max := numbers[len(numbers)-1]
 	adjlist[max+3] = append(adjlist[max+3], max)
 
 	return adjlist
