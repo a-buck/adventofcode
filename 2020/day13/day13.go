@@ -6,8 +6,9 @@ import (
 	"io/ioutil"
 	"log"
 	"math"
-	"strconv"
 	"strings"
+
+	"github.com/a-buck/adventofcode/2020/utils"
 )
 
 var (
@@ -28,10 +29,7 @@ func main() {
 	}
 	lines := strings.Split(string(content), "\n")
 
-	earliestTs := toInt(lines[0])
-	if err != nil {
-		log.Fatalf("unable to parse %s to int", lines[0])
-	}
+	earliestTs := utils.ToInt(lines[0])
 
 	parts := strings.Split(lines[1], ",")
 	buses := make([]bus, 0)
@@ -40,7 +38,7 @@ func main() {
 			continue
 		}
 
-		buses = append(buses, bus{id: toInt(v), offset: i})
+		buses = append(buses, bus{id: utils.ToInt(v), offset: i})
 	}
 
 	ans := partA(buses, earliestTs)
@@ -99,12 +97,4 @@ func findInverse(Ni, ni int) int {
 			return x
 		}
 	}
-}
-
-func toInt(s string) int {
-	v, err := strconv.Atoi(s)
-	if err != nil {
-		log.Fatalf("unable to parse %s to int", s)
-	}
-	return v
 }

@@ -26,3 +26,11 @@ func ToUint(s string) uint64 {
 	}
 	return v
 }
+
+func ToInt(s string) int {
+	v, err := strconv.Atoi(s)
+	if err != nil {
+		log.Fatalf("unable to parse %s to int", s)
+	}
+	return v
+}
